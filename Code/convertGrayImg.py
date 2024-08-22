@@ -1,9 +1,9 @@
 import os
 from PIL import Image
 
-# Define the directories
-input_dir = 'image/extended sheet/sheet7/sheet7_64x384'
-output_dir = 'image/extended sheet/sheet7/sheet7_64x384_gray'
+# Define the directories with absolute paths
+input_dir = r'D:\Uni\Đồ án tốt nghiệp\Counting Argorithm\image\extended sheet\sheet3\sheet3_64x384'
+output_dir = r'D:\Uni\Đồ án tốt nghiệp\Counting Argorithm\image\extended sheet\sheet3\sheet3_64x384_gray'
 
 # Create the output directory if it does not exist
 os.makedirs(output_dir, exist_ok=True)
@@ -21,3 +21,5 @@ for filename in os.listdir(input_dir):
         # Save the grayscale image
         gray_image_path = os.path.join(output_dir, filename)
         gray_image.save(gray_image_path)
+
+print(f'Grayscale images saved to: {output_dir}')

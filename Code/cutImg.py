@@ -1,8 +1,8 @@
 from PIL import Image
 import os
 
-# Load the image
-image_path = 'image/extended sheet/sheet7/3.png'
+# Load the image using the absolute path
+image_path = r'D:\Uni\Đồ án tốt nghiệp\Counting Argorithm\image\extended sheet\sheet3\1.png'  # Use raw string to handle backslashes
 image = Image.open(image_path)
 
 # Get the dimensions of the image
@@ -13,7 +13,7 @@ segment_width = 64
 segment_height = 384
 
 # Create a directory to save the segments
-output_dir = 'image/extended sheet/sheet7/sheet7_64x384'
+output_dir = r'D:\Uni\Đồ án tốt nghiệp\Counting Argorithm\image\extended sheet\sheet3\sheet3_64x384'
 os.makedirs(output_dir, exist_ok=True)
 
 # Calculate the number of segments
@@ -31,4 +31,4 @@ for i in range(num_segments):
     segment.save(segment_path)
 
 # Confirm completion
-output_dir
+print(f'Segments saved to: {output_dir}')
