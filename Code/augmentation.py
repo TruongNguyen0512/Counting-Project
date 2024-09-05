@@ -10,7 +10,7 @@ def cut_image(img, cut_size=(64, 64)):
     for y in range(0, img_height, cut_size[1]):
         for x in range(0, img_width, cut_size[0]):
             cut = img[y:y + cut_size[1], x:x + cut_size[0]]
-            if cut.shape == cut_size:
+            if cut.shape[0] == cut_size[1] and cut.shape[1] == cut_size[0]:
                 cuts.append(cut)
     return cuts
 
@@ -20,7 +20,7 @@ def blur_image(img):
 
 def scale_image(img, scale=0.9):
     height, width = img.shape
-    scaled_img = cv2.resize(img, (int(width*scale), int(height*scale)))
+    scaled_img = cv2.resize(img, (int(width * scale), int(height * scale)))
     return cv2.resize(scaled_img, (width, height))
 
 def rotate_image(img, angle=15):
@@ -44,62 +44,62 @@ def add_noise(img):
     noisy_img = cv2.add(img, noise)
     return noisy_img
 
+# Function to count images in a directory
+def count_images_in_folder(folder):
+    return len(glob(os.path.join(folder, '*.png')))
+
 # Function to process all images in a folder
 def process_images_in_folder(input_folder, output_folder):
+    # List of augmentation types
+    augmentation_types = ['original', 'blurred', 'scaled', 'rotated', 'brightened', 'noisy']
+    
+    # Initialize counters for each augmentation type
+    counts = {aug: 0 for aug in augmentation_types}
+    
+    # Ensure output folders exist
+    for aug in augmentation_types:
+        os.makedirs(os.path.join(output_folder, aug), exist_ok=True)
+    
     # Get list of all image files in the input folder
     image_paths = glob(os.path.join(input_folder, '*.png'))
     
     if not image_paths:
         print(f'No images found in {input_folder}')
+        return
     
     for image_path in image_paths:
-        # Load the image
+        # Read the image
         img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-        if img is None:
-            print(f'Error loading image {image_path}')
+        
+        # Process the image
+        cuts = cut_image(img)
+        if not cuts:
             continue
         
-        # Cut the image into 64x64 portions
-        cuts = cut_image(img)
-        
-        # Augment each cut portion
-        augmented_images = []
-        for cut in cuts:
-            augmented_images.append(cut)
-            augmented_images.append(blur_image(cut))
-            augmented_images.append(scale_image(cut))
-            augmented_images.append(rotate_image(cut))
-            augmented_images.append(change_brightness(cut))
-            augmented_images.append(add_noise(cut))
-        
-        # Create output directory for the current image
-        image_name = os.path.splitext(os.path.basename(image_path))[0]
-        image_output_dir = os.path.join(output_folder, image_name)
-        os.makedirs(image_output_dir, exist_ok=True)
-        
-        # Save the augmented images
-        for i, aug_img in enumerate(augmented_images):
-            output_file_path = os.path.join(image_output_dir, f'augmented_{i}.png')
-            cv2.imwrite(output_file_path, aug_img)
-        
-        print(f'Processed and generated {len(augmented_images)} augmented images for {image_name}.')
+        # Process and save the images
+        for i, cut in enumerate(cuts):
+            # Save the original cut
+            cv2.imwrite(os.path.join(output_folder, 'original', f'image_{i}.png'), cut)
+            counts['original'] += 1
+            
+            # Save augmented images
+            augmented_images = {
+                'blurred': blur_image(cut),
+                'scaled': scale_image(cut),
+                'rotated': rotate_image(cut),
+                'brightened': change_brightness(cut),
+                'noisy': add_noise(cut)
+            }
+            
+            for aug_type, aug_img in augmented_images.items():
+                cv2.imwrite(os.path.join(output_folder, aug_type, f'image_{i}.png'), aug_img)
+                counts[aug_type] += 1
+    
+    # Print the counts for each augmentation type
+    for aug in augmentation_types:
+        print(f'Số lượng ảnh trong thư mục {aug}: {counts[aug]}')
 
-# Specify the input and output folders
-input_folders = [
-    'image/extended sheet/sheet1/sheet1_64x384_gray',
-    'image/extended sheet/sheet2/sheet2_64x384_gray',
-    'image/extended sheet/sheet3/sheet3_64x384_gray',
-    'image/extended sheet/sheet4/sheet4_64x384_gray',
-    'image/extended sheet/sheet5/sheet5_64x384_grday',
-    'image/extended sheet/sheet6/sheet6_64x384_gray',
-    'image/extended sheet/sheet7/sheet7_64x384_gray' 
-]
-
+# Example usage
+input_folder = 'image/extended sheet/sheet3/sheet3_64x384_gray'
 output_folder = 'data/train/x_train'
-
-# Process all images in each folder
-for input_folder in input_folders:
-    if not os.path.exists(input_folder):
-        print(f'Input folder does not exist: {input_folder}')
-    else:
-        process_images_in_folder(input_folder, output_folder)
+process_images_in_folder(input_folder, output_folder)
