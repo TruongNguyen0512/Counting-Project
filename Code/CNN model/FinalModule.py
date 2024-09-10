@@ -1,48 +1,50 @@
-from google.colab import drive
-import numpy as np
 import os
 from keras.models import Model
 from keras.layers import Input, Conv2D, MaxPooling2D, Dropout, UpSampling2D, concatenate
 from keras.optimizers import Adam
 from keras.losses import binary_crossentropy
 from keras.callbacks import ModelCheckpoint, EarlyStopping
-from keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from sklearn.model_selection import train_test_split
+import numpy as np
+import cv2
 import matplotlib.pyplot as plt
+from google.colab import drive
 
-# Kết nối với Google Drive
+# Kết nối Google Drive
 drive.mount('/content/drive')
 
 # Đường dẫn đến thư mục chứa dữ liệu trên Google Drive
-base_dir = '/content/drive/MyDrive/MyProjectDataset/'
+base_dir = '/content/drive/MyDrive/Counting Dataset/'
 
 # Đường dẫn đến các thư mục con
-train_X_dir = os.path.join(base_dir, 'train/X_train')
-train_Y_dir = os.path.join(base_dir, 'train/Y_train')
-test_X_dir = os.path.join(base_dir, 'test/X_test')
-test_Y_dir = os.path.join(base_dir, 'test/Y_test')
+train_X_dir = os.path.join(base_dir, 'Train/X_train')
+train_Y_dir = os.path.join(base_dir, 'Train/Y_train')
 
-# Hàm để tải dữ liệu từ các tệp .npy
-def load_data(data_dir):
-    data_list = []
-    for file_name in sorted(os.listdir(data_dir)):
-        file_path = os.path.join(data_dir, file_name)
-        data = np.load(file_path)
-        data_list.append(data)
-    return np.array(data_list)
+# Hàm để tải ảnh từ thư mục
+def load_images_from_folder(folder):
+    images = []
+    for subdir in os.listdir(folder):
+        subfolder = os.path.join(folder, subdir)
+        for filename in os.listdir(subfolder):
+            img_path = os.path.join(subfolder, filename)
+            img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+            if img is not None:
+                images.append(img)
+    return np.array(images)
 
-# Tải dữ liệu từ Google Drive
-X_train = load_data(train_X_dir)
-Y_train = load_data(train_Y_dir)
-X_test = load_data(test_X_dir)
-Y_test = load_data(test_Y_dir)
+# Tải ảnh từ các thư mục
+X_data = load_images_from_folder(train_X_dir)
+Y_data = load_images_from_folder(train_Y_dir)
 
-# Kiểm tra kích thước dữ liệu đã tải
-print(f"X_train shape: {X_train.shape}")
-print(f"Y_train shape: {Y_train.shape}")
-print(f"X_test shape: {X_test.shape}")
-print(f"Y_test shape: {Y_test.shape}")
+# Thêm chiều cho dữ liệu (để có dạng [số lượng mẫu, chiều cao, chiều rộng, số kênh])
+X_data = np.expand_dims(X_data, axis=-1)  # Thêm chiều kênh cho X_data
+Y_data = np.expand_dims(Y_data, axis=-1)  # Thêm chiều kênh cho Y_data
 
-# Khởi tạo mô hình
+# Chia dữ liệu thành 80% train và 20% validation
+X_train, X_val, Y_train, Y_val = train_test_split(X_data, Y_data, test_size=0.2, random_state=42)
+
+# Khởi tạo mô hình U-Net
 inputs = Input(shape=(64, 64, 1))
 
 # Module 1 (Block1)
@@ -91,25 +93,28 @@ conv16 = Conv2D(1, (1, 1), activation='sigmoid')(conv15)
 model = Model(inputs=inputs, outputs=conv16)
 
 # Biên dịch mô hình với hàm mất mát và trình tối ưu
-model.compile(optimizer=Adam(lr=1e-4), loss=binary_crossentropy, metrics=['accuracy'])
+model.compile(optimizer=Adam(learning_rate=1e-4), loss=binary_crossentropy, metrics=['accuracy'])
 
-# Tạo các ImageDataGenerator để tăng cường dữ liệu nếu cần
+# Tạo các ImageDataGenerator để tăng cường dữ liệu
 datagen = ImageDataGenerator(horizontal_flip=True, vertical_flip=True, rotation_range=90)
 
+# Tạo generator cho dữ liệu huấn luyện
+train_generator = datagen.flow(X_train, Y_train, batch_size=32)
+
 # Callbacks để lưu mô hình tốt nhất và dừng sớm nếu không cải thiện
-checkpoint = ModelCheckpoint('/content/drive/MyDrive/MyProjectDataset/best_model.h5', monitor='val_loss', save_best_only=True, mode='min')
+checkpoint = ModelCheckpoint('/content/drive/MyDrive/Counting Dataset/best_model.h5', monitor='val_loss', save_best_only=True, mode='min')
 early_stopping = EarlyStopping(monitor='val_loss', patience=10, mode='min')
 
-# Huấn luyện mô hình
-history = model.fit(datagen.flow(X_train, Y_train, batch_size=32),
-                    validation_data=(X_test, Y_test),
+# Huấn luyện mô hình với dữ liệu tăng cường
+history = model.fit(train_generator,
+                    validation_data=(X_val, Y_val),
                     epochs=50,
                     callbacks=[checkpoint, early_stopping])
 
 # Đánh giá mô hình
-score = model.evaluate(X_test, Y_test, verbose=0)
-print('Test loss:', score[0])
-print('Test accuracy:', score[1])
+score = model.evaluate(X_val, Y_val, verbose=0)
+print('Validation loss:', score[0])
+print('Validation accuracy:', score[1])
 
 # Vẽ biểu đồ quá trình huấn luyện
 plt.plot(history.history['loss'], label='Training loss')

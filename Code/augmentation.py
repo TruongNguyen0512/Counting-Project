@@ -91,7 +91,7 @@ def process_images_and_labels(input_img_folder, input_label_folder, output_img_f
             }
             augmented_labels = {
                 'original': label_cut,
-                'blurred': blur_image(label_cut),
+                'blurred': label_cut,
                 'scaled': scale_image(label_cut),
                 'rotated': rotate_image(label_cut),
                 'brightened': label_cut,  # Không cần thay đổi độ sáng nhãn
