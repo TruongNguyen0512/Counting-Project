@@ -1,9 +1,12 @@
 import os
 from PIL import Image
+import sys
 
+
+sys.stdout.reconfigure(encoding='utf-8')
 # Define the directories with absolute paths
-input_dir = r'D:\Uni\Đồ án tốt nghiệp\Counting Argorithm\image\extended sheet\sheet3\sheet3_64x384'
-output_dir = r'D:\Uni\Đồ án tốt nghiệp\Counting Argorithm\image\extended sheet\sheet3\sheet3_64x384_gray'
+input_dir = r'D:\Uni\Đồ án tốt nghiệp\Counting Argorithm\Asem-Sample'
+output_dir = r'D:\Uni\Đồ án tốt nghiệp\Counting Argorithm\Asem-GrayScale-Sample'
 
 # Create the output directory if it does not exist
 os.makedirs(output_dir, exist_ok=True)
