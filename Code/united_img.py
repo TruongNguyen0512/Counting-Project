@@ -2,7 +2,7 @@ import os
 import shutil
 
 # Đường dẫn đến 7 folder ảnh xám
-folders = [
+folders = [   
     'image/labeled sheet/sheet1',
     'image/labeled sheet/sheet2',
     'image/labeled sheet/sheet3',
