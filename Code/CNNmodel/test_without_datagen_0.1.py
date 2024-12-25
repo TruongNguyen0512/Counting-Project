@@ -27,7 +27,7 @@ def load_images_from_folder(folder):
 
 # Tải ảnh từ các thư mục
 X_data = load_images_from_folder(train_X_dir)
-Y_data = load_images_from_folder(train_Y_dir)
+Y_data = load_images_from_folder(train_Y_dir)                                      
 
 # Normalize the data
 X_data = X_data / 255.0
@@ -123,13 +123,21 @@ model = Model(inputs=inputs, outputs=conv19)
 model.compile(optimizer=Adam(learning_rate=1e-4, clipnorm=1.0), loss=MeanSquaredError(), metrics=['accuracy'])
 
 # Callbacks để lưu mô hình tốt nhất và dừng sớm nếu không cải thiện
-checkpoint = ModelCheckpoint('../../best_model.keras', monitor='val_loss', save_best_only=True, mode='min')
-early_stopping = EarlyStopping(monitor='val_loss', patience=20, mode='min', restore_best_weights=True)
+checkpoint = ModelCheckpoint('../../best_model.keras', 
+                           monitor='val_loss',
+                           save_best_only=True,
+                           mode='min')
+
+early_stopping = EarlyStopping(monitor='val_loss',
+                              patience=15,  # Increased patience
+                              mode='min',
+                              restore_best_weights=True,
+                              min_delta=0.0001)  # Added minimum change threshold
 
 # Huấn luyện mô hình
 history = model.fit(X_train, Y_train,
                     validation_data=(X_val, Y_val),
-                    epochs=50,
+                    epochs=150,  # Increased epochs
                     batch_size=32,
                     callbacks=[checkpoint, early_stopping])
 
