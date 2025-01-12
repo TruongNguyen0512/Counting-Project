@@ -110,8 +110,8 @@ def process_images_and_labels(input_img_folder, input_label_folder, output_img_f
         print(f'Số lượng ảnh trong thư mục {aug}: {counts[aug]}')
 
 # Example usage
-input_img_folder = 'image/united image gray'
-input_label_folder = 'image/united image labeled'
+input_img_folder = 'Asem-GrayScale-Sample'
+input_label_folder = 'Asem-labeled-Sample'
 output_img_folder = 'data/train/x_train'
 output_label_folder = 'data/train/y_train'
 process_images_and_labels(input_img_folder, input_label_folder, output_img_folder, output_label_folder)
